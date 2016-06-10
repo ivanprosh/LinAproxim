@@ -18,6 +18,9 @@ public:
   ~MainWindow();
   
 private slots:
+  //
+  void YListAccept(bool checked);
+  //использует виджет графиков:
   void titleDoubleClick(QMouseEvent *event, QCPPlotTitle *title);
   void axisLabelDoubleClick(QCPAxis* axis, QCPAxis::SelectablePart part);
   void legendDoubleClick(QCPLegend* legend, QCPAbstractLegendItem* item);
@@ -33,6 +36,8 @@ private slots:
   
 private:
   Ui::MainWindow *ui;
+  QVector<float> Number;
+  float* Yarr; //указатель под массив точек
 };
 
 #endif // MAINWINDOW_H

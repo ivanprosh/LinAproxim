@@ -34,8 +34,13 @@ MainWindow::MainWindow(QWidget *parent) :
   QString string = codec->toUnicode(encodedString);
   ui->lineEdit->setPlaceholderText(string);
   ui->lineEdit->setValidator(new QRegExpValidator(QRegExp("[0-9, .]{,100}")));
+  ui->lineEdit->setMaxLength(200);
+  //память для массива для хранения координат точек:
+  Yarr = new float[100];
   //addRandomGraph();
-  
+  // слот для соединения с кнопкой подтверждения введенных данных
+  connect(ui->pushButton, SIGNAL(clicked(bool)), this,SLOT(YListAccept(bool)));
+
   // connect slot that ties some axis selections together (especially opposite axes):
   connect(ui->customPlot, SIGNAL(selectionChangedByUser()), this, SLOT(selectionChanged()));
   // connect slots that takes care that when an axis is selected, only that direction can be dragged and zoomed:
@@ -61,7 +66,18 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
-  delete ui;
+    delete ui;
+}
+
+void MainWindow::YListAccept(bool checked)
+{
+    float curnum;
+    QTextStream cur(ui->lineEdit->text().toUtf8());
+    while (!cur.atEnd()) {
+        cur >> curnum;
+        Number.push_back(curnum);
+        qDebug() << Number.last();
+    }
 }
 
 void MainWindow::titleDoubleClick(QMouseEvent* event, QCPPlotTitle* title)
