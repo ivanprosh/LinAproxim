@@ -17,7 +17,8 @@ MainWindow::MainWindow(QWidget *parent) :
   ui->customPlot->axisRect()->setupFullAxesBox();
   
   ui->customPlot->plotLayout()->insertRow(0);
-  ui->customPlot->plotLayout()->addElement(0, 0, new QCPPlotTitle(ui->customPlot, "Линейное сглаживание"));
+  QString string = russian("Линейное и нелинейное сглаживание");
+  ui->customPlot->plotLayout()->addElement(0, 0, new QCPPlotTitle(ui->customPlot, string));
   
   ui->customPlot->xAxis->setLabel("x Axis");
   ui->customPlot->yAxis->setLabel("y Axis");
@@ -29,18 +30,17 @@ MainWindow::MainWindow(QWidget *parent) :
   ui->customPlot->legend->setSelectableParts(QCPLegend::spItems); // legend box shall not be selectable, only legend items
   
   //
-  QByteArray encodedString = "Введите через пробел массив точек формата 99.9";
-  QTextCodec *codec = QTextCodec::codecForName("Windows-1251");
-  QString string = codec->toUnicode(encodedString);
+  string = russian("Введите через пробел массив точек формата 99.9");
   ui->lineEdit->setPlaceholderText(string);
   ui->lineEdit->setValidator(new QRegExpValidator(QRegExp("[0-9, .]{,100}")));
   ui->lineEdit->setMaxLength(200);
-  //память для массива для хранения координат точек:
-  Yarr = new float[100];
-  //addRandomGraph();
+  //для заголовков графиков
+  Sliderlabels = new char[3];
+  Sliderlabels[0] = '3';
+  Sliderlabels[1] = '5';
+  Sliderlabels[2] = '7';
   // слот для соединения с кнопкой подтверждения введенных данных
   connect(ui->pushButton, SIGNAL(clicked(bool)), this,SLOT(YListAccept(bool)));
-
   // connect slot that ties some axis selections together (especially opposite axes):
   connect(ui->customPlot, SIGNAL(selectionChangedByUser()), this, SLOT(selectionChanged()));
   // connect slots that takes care that when an axis is selected, only that direction can be dragged and zoomed:
@@ -69,15 +69,120 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+void MainWindow::aproximator(int level)
+{
+    Result.resize(Number.size());
+    x.resize(Number.size());
+    double xtick = 0.0;
+    QVector<double>::iterator itNumb = Number.begin();
+    QVector<double>::iterator itRes = Result.begin();
+    QVector<double>::iterator itX = x.begin();
+    //заполняем координаты x
+    while(itX!=x.end())
+    {
+        *itX = xtick++;
+        itX++;
+    }
+    //рассчет Y в зависимости от выбранного уровня апроксимации
+    switch (level) {
+
+    case 1:
+        *(itRes) = (5*(*itNumb) + 2*(*(itNumb+1)) - *(itNumb+2))/6;
+
+        while((++itNumb)!=Number.end())
+        {
+            qDebug() << "Current y: " << *itNumb;
+            if((itNumb+1) != Number.end())
+               *(++itRes) = (*(itNumb-1) + *(itNumb) + *(itNumb+1))/3;
+            else
+               *(++itRes) = (5*(*(itNumb)) + 2*(*(itNumb-1)) - *(itNumb-2))/6;
+            qDebug() << "Current new y: " << *itRes;
+        }
+        break;
+    case 2:
+
+        *(itRes) = (3*(*itNumb) + 2*(*(itNumb+1)) + *(itNumb+2) - *(itNumb+4))/5;
+        itRes++;itNumb++;
+        *(itRes) = (4*(*itNumb-1) + 3*(*(itNumb)) + 2*(*(itNumb+1)) + *(itNumb+2))/10;
+
+        while((++itNumb)!=Number.end())
+        {
+            qDebug() << "Current y: " << *itNumb;
+            if((itNumb+1) != Number.end())
+                if((itNumb+2) != Number.end())
+                    *(++itRes) = (*(itNumb-2) + *(itNumb-1) + *(itNumb) + *(itNumb+1) + *(itNumb+2))/5;
+                else
+                    *(++itRes) = (*(itNumb-2) + 2*(*(itNumb-1)) + 3*(*(itNumb)) + 4*(*(itNumb+1)))/10;
+            else
+                *(++itRes) = (3*(*(itNumb)) + 2*(*(itNumb-1)) + *(itNumb-2) - *(itNumb-4))/5;
+
+                qDebug() << "Current new y: " << *itRes;
+        }
+        break;
+    case 3:
+        //y0
+        *(itRes) = (39*(*itNumb) + 8*(*(itNumb+1)) - 4*(*(itNumb+2) + *(itNumb+3) + *(itNumb+4))
+                    + *(itNumb+5) - 2*(*(itNumb+6)))/42;
+        itRes++;itNumb++;
+        //y1
+        *(itRes) = (8*(*itNumb-1) + 19*(*(itNumb)) + 16*(*(itNumb+1)) + 6*(*(itNumb+2))
+                    - 4*(*(itNumb+3)) + 4*(*(itNumb+6)) )/42;
+        itRes++;itNumb++;
+        //y2
+        *(itRes) = (-4*(*itNumb-2) + 16*(*(itNumb-1)) + 19*(*(itNumb)) + 12*(*(itNumb+1)) + 2*(*(itNumb+2))
+                    + 4*(*(itNumb+3)) + *(itNumb+4) )/42;
+
+        while((++itNumb)!=Number.end())
+        {
+                qDebug() << "Current y: " << *itNumb;
+                if((itNumb+1) != Number.end())
+                if((itNumb+2) != Number.end())
+                if((itNumb+3) != Number.end())
+                *(++itRes) = (7*(*(itNumb)) + 6*(*(itNumb+1) + *(itNumb-1)) + 3*(*(itNumb+2) + *(itNumb-2))
+                              - 2*(*(itNumb+3) + *(itNumb-3)))/21;
+                else
+                *(++itRes) = (*(itNumb-4) - 4*(*(itNumb-3)) + 2*(*(itNumb-2)) + 12*(*(itNumb-1)) + 19*(*(itNumb))
+                              + 16*(*(itNumb+1)) - 4 * (*(itNumb+2)))/42;
+                else
+                *(++itRes) = (4*(*(itNumb-5)) - 7*(*(itNumb-4)) - 4*(*(itNumb-3)) + 6*(*(itNumb-2)) + 16*(*(itNumb - 1))
+                              + 19*(*(itNumb)) + 8 * (*(itNumb+1)))/42;
+                else
+                *(++itRes) = (-2*(*(itNumb-6)) + 4*(*(itNumb-5)) + 1*(*(itNumb-4)) - 4*(*(itNumb-3)) - 4*(*(itNumb-2))
+                              + 8*(*(itNumb - 1)) + 39*(*(itNumb)))/42;
+
+                qDebug() << "Current new y: " << *itRes;
+        }
+        break;
+    default:
+        break;
+    }
+
+}
+
 void MainWindow::YListAccept(bool checked)
 {
+    Number.clear();
     float curnum;
     QTextStream cur(ui->lineEdit->text().toUtf8());
     while (!cur.atEnd()) {
         cur >> curnum;
         Number.push_back(curnum);
-        qDebug() << Number.last();
     }
+    if(Number.size() < 10) {
+        QString msg = russian("Слишком мало точек ");
+        QMessageBox* box= new QMessageBox(QMessageBox::Critical,
+                                          russian("Ошибка данных"),
+                                          msg,
+                                          QMessageBox::Cancel);
+        box->show();
+        return;
+    }
+    aproximator(ui->horizontalSlider->value());
+
+    if(ui->customPlot->graphCount()==0) addGraph("Исходный график",x,Number);
+    QByteArray name = "по 1 точкам";
+    name[3] = Sliderlabels[ui->horizontalSlider->value()-1];
+    addGraph(name,x,Result);
 }
 
 void MainWindow::titleDoubleClick(QMouseEvent* event, QCPPlotTitle* title)
@@ -194,33 +299,24 @@ void MainWindow::mouseWheel()
     ui->customPlot->axisRect()->setRangeZoom(Qt::Horizontal|Qt::Vertical);
 }
 
-void MainWindow::addRandomGraph()
+void MainWindow::addGraph(QByteArray name,const QVector<double>& x,const QVector<double>& y)
 {
-  int n = 50; // number of points in graph
-  double xScale = (rand()/(double)RAND_MAX + 0.5)*2;
-  double yScale = (rand()/(double)RAND_MAX + 0.5)*2;
-  double xOffset = (rand()/(double)RAND_MAX - 0.5)*4;
-  double yOffset = (rand()/(double)RAND_MAX - 0.5)*5;
-  double r1 = (rand()/(double)RAND_MAX - 0.5)*2;
-  double r2 = (rand()/(double)RAND_MAX - 0.5)*2;
-  double r3 = (rand()/(double)RAND_MAX - 0.5)*2;
-  double r4 = (rand()/(double)RAND_MAX - 0.5)*2;
-  QVector<double> x(n), y(n);
-  for (int i=0; i<n; i++)
-  {
-    x[i] = (i/(double)n-0.5)*10.0*xScale + xOffset;
-    y[i] = (qSin(x[i]*r1*5)*qSin(qCos(x[i]*r2)*r4*3)+r3*qCos(qSin(x[i])*r4*2))*yScale + yOffset;
-  }
-  
+  //QByteArray encodedString = "Исходный график";
+  QTextCodec *codec = QTextCodec::codecForName("Windows-1251");
+  QString string = codec->toUnicode(name);
   ui->customPlot->addGraph();
-  ui->customPlot->graph()->setName(QString("New graph %1").arg(ui->customPlot->graphCount()-1));
+  ui->customPlot->xAxis->setLabel("x");
+  ui->customPlot->yAxis->setLabel("y");
+  ui->customPlot->xAxis->setRange(0, x.size());
+  ui->customPlot->yAxis->setRange(0,*std::max_element(y.begin(),y.end()));
+
+  ui->customPlot->graph()->setName(string);
   ui->customPlot->graph()->setData(x, y);
-  ui->customPlot->graph()->setLineStyle((QCPGraph::LineStyle)(rand()%5+1));
-  if (rand()%100 > 50)
-    ui->customPlot->graph()->setScatterStyle(QCPScatterStyle((QCPScatterStyle::ScatterShape)(rand()%14+1)));
+  //ui->customPlot->graph()->setLineStyle((QCPGraph::LineStyle)(rand()%5+1));
+
   QPen graphPen;
   graphPen.setColor(QColor(rand()%245+10, rand()%245+10, rand()%245+10));
-  graphPen.setWidthF(rand()/(double)RAND_MAX*2+1);
+  //graphPen.setWidthF(rand()/(double)RAND_MAX*2+1);
   ui->customPlot->graph()->setPen(graphPen);
   ui->customPlot->replot();
 }
@@ -254,7 +350,7 @@ void MainWindow::contextMenuRequest(QPoint pos)
     menu->addAction("Move to bottom left", this, SLOT(moveLegend()))->setData((int)(Qt::AlignBottom|Qt::AlignLeft));
   } else  // general context menu on graphs requested
   {
-    menu->addAction("Add random graph", this, SLOT(addRandomGraph()));
+    menu->addAction("Add random graph", this, SLOT(addGraph()));
     if (ui->customPlot->selectedGraphs().size() > 0)
       menu->addAction("Remove selected graph", this, SLOT(removeSelectedGraph()));
     if (ui->customPlot->graphCount() > 0)
@@ -280,7 +376,13 @@ void MainWindow::moveLegend()
 
 void MainWindow::graphClicked(QCPAbstractPlottable *plottable)
 {
-  ui->statusBar->showMessage(QString("Clicked on graph '%1'.").arg(plottable->name()), 1000);
+    ui->statusBar->showMessage(QString("Clicked on graph '%1'.").arg(plottable->name()), 1000);
+}
+
+QString MainWindow::russian(QByteArray string)
+{
+    QTextCodec *codec = QTextCodec::codecForName("Windows-1251");
+    return codec->toUnicode(string);
 }
 
 

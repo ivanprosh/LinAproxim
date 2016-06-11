@@ -16,6 +16,7 @@ class MainWindow : public QMainWindow
 public:
   explicit MainWindow(QWidget *parent = 0);
   ~MainWindow();
+  void aproximator(int level);
   
 private slots:
   //
@@ -27,7 +28,7 @@ private slots:
   void selectionChanged();
   void mousePress();
   void mouseWheel();
-  void addRandomGraph();
+  void addGraph(QByteArray name,const QVector<double>& x,const QVector<double>& y);
   void removeSelectedGraph();
   void removeAllGraphs();
   void contextMenuRequest(QPoint pos);
@@ -36,8 +37,10 @@ private slots:
   
 private:
   Ui::MainWindow *ui;
-  QVector<float> Number;
-  float* Yarr; //указатель под массив точек
+  QVector<double> Number,Result,x;
+  char* Sliderlabels;
+  QString russian(QByteArray string);
+
 };
 
 #endif // MAINWINDOW_H
