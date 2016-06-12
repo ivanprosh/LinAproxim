@@ -13,9 +13,14 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-    qcustomplot.cpp
+    qcustomplot.cpp \
+    approximator.cpp
 
 HEADERS  += mainwindow.h \
-    qcustomplot.h
+    qcustomplot.h \
+    approximator.h
 
 FORMS    += mainwindow.ui
+
+DISTFILES += \
+    resources.rc

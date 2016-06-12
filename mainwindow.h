@@ -16,7 +16,8 @@ class MainWindow : public QMainWindow
 public:
   explicit MainWindow(QWidget *parent = 0);
   ~MainWindow();
-  void aproximator(int level);
+  QVector<double> Number,Result,x;
+  //void aproximator(int level);
   
 private slots:
   //
@@ -37,7 +38,6 @@ private slots:
   
 private:
   Ui::MainWindow *ui;
-  QVector<double> Number,Result,x;
   char* Sliderlabels;
   QString russian(QByteArray string);
 
